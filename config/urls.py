@@ -16,9 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from core.views import index
+from currency.views import mono, privat, privat_year
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', index, name="index")
+    path('privat', privat, name="privat"),
+    path('mono', mono, name="mono"),
+    path('privat_year', privat_year, name="privat_year"),
+    path('', privat, name="privatik")
+
 ]
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,11 +1,259 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>{{ provider }}</title>
+    <link rel="stylesheet" href="{% static 'currency/css/style.css' %}">
 </head>
 <body>
-<H4>HELLO WORLD</H4>
+<div class="bg">
+    <div class="container">
+        <div class="provider_name"><img src="{{ logo_url }}" width="21px" id="privat_small"
+                                        alt="">{{ provider }}
+        </div>
+        <div class="added_date">
+            <h6>{{ added_date }}</h6>
+        </div>
+
+        <div class="line_menu">
+            <ul class="navigation">
+                <li class="navigation"><a href="#buy">Buy </a></li>
+                <li class="navigation"><a href="#sell">Sell </a></li>
+            </ul>
+        </div>
+
+        <div class="calculator">
+            <div id="sell">
+                {% if 'mono' in request.path %}
+                    <form method="POST" action="{% url 'mono' %}" id="myForm">
+                    {% csrf_token %}
+                {% elif 'privat' or 'privat_years' in request.path %}
+                    <form method="POST" action="{% url 'privat' %}" id="myForm">
+                    {% csrf_token %}
+                {% endif %}
+
+                <div class="left_value">
+                    UAH
+                    <label>
+                        {{ form.first_value }}<br>
+                    </label>
+                    <label class="form_name_desc">
+                    </label>
+                </div>
+
+                <div class="middle_value">
+                    <img src="https://cdn-icons-png.flaticon.com/512/245/245906.png" width="40px">
+                </div>
+
+                <div class="right_value">
+                    <label class="form_name_desc">
+                    </label>
+                    <input type="text" readonly value="{{ from_ua_value }}" class="readonly">
+                    {{ form.currency_name_privat }}<br>
+                </div>
+                <div class="button_cal">
+                    <button type="submit" class="button" id="calculateBtn">Calculate</button>
+                </div>
+                </form>
+            </div>
+
+
+            <div id="buy">
+                {% if 'mono' in request.path %}
+                    <form method="POST" action="{% url 'mono' %}">
+                    {% csrf_token %}
+                {% else %}
+                    <form method="POST" action="{% url 'privat' %}">
+                    {% csrf_token %}
+                {% endif %}
+
+                <div class="left_value">
+                    <div class="dropdown">
+                        <div class="dropdown-content">
+                            {{ form.currency_name_privat }}
+                        </div>
+                    </div>
+
+                    <label>
+                        {{ form.first_value }}<br>
+                    </label>
+                    <label class="form_name_desc">
+                    </label>
+                </div>
+
+                <div class="middle_value">
+                    <img src="https://cdn-icons-png.flaticon.com/512/245/245906.png" width="40px">
+                </div>
+
+                <div class="right_value">
+                    <label class="form_name_desc">
+                    </label>
+                    <input type="text" readonly value="{{ to_ua_value }}" class="readonly">
+
+                    UAH<br>
+                </div>
+
+                <div class="button_cal">
+                    <button type="submit" class="button" id="calculateBtn">Calculate</button>
+                </div>
+                </form>
+            </div>
+
+
+            <div class="bottom">
+                <div class="bank_list">
+                    <a href="{% url 'privat' %}" class="bank_logo"><img
+                            src="data:image/png;base64,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"
+                            width="100px" id="privat"></a>
+                    <div class="devider"></div>
+                    <a href="{% url 'mono' %}" class="bank_logo"><img
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzdYiycKb3ml9jMCmiFDW6ZvTf_nWKNjbRiQ&usqp=CAU"
+                            width="100px" id="mono"></a>
+                    <br><br><a href="{% url 'privat_year' %}">
+                    <button type="submit" class="button" id="graphicBtn">Show Graphic
+                    </button>
+                </a>{% if  'privat_year'%}
+                    <div class="chart" id="chart">
+                        <canvas id="currencyChart"></canvas>
+                    </div>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{##}
+{#!!!For some reason below code send a POST request without page reloading, but do not get a data, that's why not possible to received currency change value.!!!#}
+
+{#<script>#}
+{#  const form = document.getElementById('myForm');#}
+{##}
+{#  form.addEventListener('submit', (event) => {#}
+{#    event.preventDefault(); // Prevent the default form submission#}
+{##}
+{#    const formData = new FormData(form); // Get form data#}
+{#    const url = form.action; // Retrieve the URL from the form's action attribute#}
+{##}
+{#    fetch(url, {#}
+{#      method: 'POST',#}
+{#      body: formData#}
+{#    })#}
+{#      .then(response => response.json()) // Process the response data if needed#}
+{#      .then(data => {#}
+{#        // Handle the response data#}
+{#        console.log(data);#}
+{#      })#}
+{#      .catch(error => {#}
+{#        // Handle any errors#}
+{#        console.error(error);#}
+{#      });#}
+{#  });#}
+{#</script>#}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    var currencyData_EUR = JSON.parse('{{ currency_data_EUR|safe }}');
+    var borderColor_EUR = 'orange';
+
+    var currencyData_US = JSON.parse('{{ currency_data_US|safe }}');
+    var borderColor_US = 'green';
+
+    var currencyData_GBP = JSON.parse('{{ currency_data_GBP|safe }}');
+    var borderColor_GBP = 'red';
+
+    var currencyData_CHF = JSON.parse('{{ currency_data_CHF|safe }}');
+    var borderColor_CHF = 'blue';
+
+    // Extract the dates and rates from the currencyData
+    var dates_US = currencyData_US.map(function (data) {
+        return data.for_date;
+    });
+
+    var dates_EUR = currencyData_EUR.map(function (data) {
+        return data.for_date;
+    });
+
+    var dates_GBP = currencyData_GBP.map(function (data) {
+        return data.for_date;
+    });
+
+    var dates_CHF = currencyData_CHF.map(function (data) {
+        return data.for_date;
+    });
+
+    var rates_US = currencyData_US.map(function (data) {
+        return data.buy_rate;
+    });
+
+    var rates_EUR = currencyData_EUR.map(function (data) {
+        return data.buy_rate;
+    });
+
+    var rates_GBP = currencyData_GBP.map(function (data) {
+        return data.buy_rate;
+    });
+
+    var rates_CHF = currencyData_CHF.map(function (data) {
+        return data.buy_rate;
+    });
+
+    // Create a new Chart instance
+    var ctx = document.getElementById('currencyChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates_US,
+            datasets: [
+                {
+                    label: 'USD',
+                    data: rates_US,
+                    borderColor: borderColor_US,
+                    fill: false
+                },
+                {
+                    label: 'EUR',
+                    data: rates_EUR,
+                    borderColor: borderColor_EUR,
+                    fill: false
+                },
+                {
+                    label: 'GBP',
+                    data: rates_GBP,
+                    borderColor: borderColor_GBP,
+                    fill: false
+                },
+                {
+                    label: 'CHF',
+                    data: rates_CHF,
+                    borderColor: borderColor_CHF,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Exchange Rate'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
 
 </body>
 </html>
