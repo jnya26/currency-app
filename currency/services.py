@@ -6,7 +6,7 @@ from config import settings
 import requests
 import concurrent
 import pycountry
-
+import time
 
 class ExchangeRatesServices:
     CURRENCIES = ['USD', 'EUR']
@@ -122,6 +122,7 @@ class ExchangeRatesServicesMono:
                     return currency_rate
         except TypeError as e:
             print(f'Error, code will be reloaded because of {e}.')
+            time.sleep(5)
             self.get_rates_mono()
 
 
