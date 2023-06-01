@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -120,3 +121,15 @@ MAX_WOKER = 10
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CELERY_BROKER_URL='redis://localhost:6379/0'
+CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = '853c6374d86fb4'
+EMAIL_HOST_PASSWORD = '9b392430f70527'
+EMAIL_PORT = '2525'
+DEFAULT_FROM_EMAIL = 'admin@currency.com'
+
+
+

@@ -9,7 +9,7 @@ import pycountry
 import time
 
 class ExchangeRatesServices:
-    CURRENCIES = ['USD', 'EUR']
+    CURRENCIES = ['USD', 'EUR', 'CHF', 'GBP']
 
     def get_rates(self):
         url = "https://api.privatbank.ua/p24api/pubinfo?exchange&coursid=5"
@@ -34,7 +34,7 @@ class ExchangeRatesServices:
                 continue
             else:
                 if ExchangeRate.objects.filter(base_currency=d['base_ccy'], currency=d['ccy'],
-                                               provider=provider, added_date=datetime.today(), sale_rate=d['sale'],
+                                               provider=provider, for_date=datetime.today(), sale_rate=d['sale'],
                                                buy_rate=d['buy']).exists():
                     continue
                 else:
@@ -100,7 +100,7 @@ class ExchangeRatesServicesMono:
                             continue
                         else:
                             if ExchangeRate.objects.filter(base_currency='UAH', currency=currency_a_code,
-                                                           provider=provider, added_date=datetime.today()).exists():
+                                                           provider=provider, for_date=datetime.today()).exists():
                                 continue
 
                             else:
@@ -124,13 +124,8 @@ class ExchangeRatesServicesMono:
             print(f'Error, code will be reloaded because of {e}.')
             time.sleep(5)
             self.get_rates_mono()
-
-
-class ExchangeRatesServiceYear:
-    CURRENCIES = ['GBP', 'USD', 'EUR', 'CHF']
-
+class PrivatYear():
     def thread(self):
-
         end_date = datetime.now()
         start_date = datetime(2023, 1, 1)
         delay = (end_date - start_date).days
@@ -143,7 +138,10 @@ class ExchangeRatesServiceYear:
             for future in concurrent.futures.as_completed(futures):
                 currency_rate.extend(future.result())
 
+
+    CURRENCIES = ['GBP', 'USD', 'EUR', 'CHF']
     def get_year_rates(self, date):
+
         url = "https://api.privatbank.ua/p24api/exchange_rates"
         logo_url = "https://avatars.githubusercontent.com/u/95229470?s=280&v=4"
         provider = \

@@ -1,0 +1,3 @@
+,provider__name,base_currency,currency,sale_rate,buy_rate,for_date
+1,MonoBank,UAH,EUR,38.0000,37.0000,2023-05-31
+2,MonoBank,UAH,USD,37.6000,36.8000,2023-05-31

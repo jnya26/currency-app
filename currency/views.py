@@ -1,13 +1,16 @@
 import json
 
+import time
+
 from datetime import datetime
 from dateutil.utils import today
 from django.http import HttpResponse
 from django.shortcuts import render
 from decimal import Decimal
 from currency.forms import Calculator
-from currency.services import ExchangeRatesServices, ExchangeRatesServicesMono, ExchangeRatesServiceYear
+from currency.services import ExchangeRatesServices, ExchangeRatesServicesMono, PrivatYear
 from .models import ExchangeRate, ExchangeRateProvider
+from .tasks import send_custom_mail
 
 
 def privat(request):
@@ -47,6 +50,7 @@ def privat(request):
                     'added_date': added_date,
                     'to_ua_value': to_ua_value
                 }
+
                 return render(request, 'core/index.html', context)
 
     else:
@@ -56,6 +60,7 @@ def privat(request):
         'rates': rates,
         'form': form,
     }
+
     return render(request, 'core/index.html', context)
 
 
@@ -110,71 +115,92 @@ def mono(request):
 
 
 def privat_year(request):
+
     start_date = today()
     end_date = datetime(2023, 1, 1)
-    delay = (start_date - end_date).days
-    print(delay)
+    delayd = (start_date - end_date).days
+    print(delayd)
     provider = ExchangeRateProvider.objects.filter(name="PrivatBank",
                                                    api_url="https://api.privatbank.ua/p24api/exchange_rates").first()
     counts = ExchangeRate.objects.filter(provider_id=provider).count()
     print(counts)
-    if counts < delay * 4:
-        service = ExchangeRatesServiceYear()
-        service.thread()
+    if counts < delayd * 4:
+        try:
+            service = PrivatYear()
+            service.thread()
+            send_custom_mail.delay()
 
-    exchange_rates_provider = ExchangeRateProvider.objects.filter(name="PrivatBank",
-                                                                  api_url="https://api.privatbank.ua/p24api/"
-                                                                          "exchange_rates")
-    form = Calculator(request.POST)
-    if exchange_rates_provider.exists():
-        exchange_rate_provider = exchange_rates_provider.first()
-        exchange_rates = ExchangeRate.objects.filter(base_currency="UAH", currency__in=['USD', 'EUR', 'CHF', 'GBP'],
-                                                     provider=exchange_rate_provider).order_by('for_date').all()
+        except TypeError as e:
+            print(f'Error, code will be reloaded because of {e}.')
+            time.sleep(5)
+            service = PrivatYear()
+            service.thread()
 
-        if exchange_rates:
-            currency_data_US = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
-                                                           currency__in=['USD']).order_by('for_date')
-            currency_data_json_US = json.dumps([{
-                'for_date': rate.for_date.strftime('%Y-%m-%d'),
-                'buy_rate': float(rate.buy_rate),
-                'currency': rate.currency,
-                # Include other fields as needed
-            } for rate in currency_data_US])
+    else:
+        if TypeError:
+            return render(request, 'core/index.html')
+        else:
 
-            currency_data_EUR = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
-                                                            currency__in=['EUR']).order_by('for_date')
-            currency_data_json_EUR = json.dumps([{
-                'for_date': rate.for_date.strftime('%Y-%m-%d'),
-                'buy_rate': float(rate.buy_rate),
-                'currency': rate.currency,
-                # Include other fields as needed
-            } for rate in currency_data_EUR])
+            send_custom_mail.delay()
+            exchange_rates_provider = ExchangeRateProvider.objects.filter(name="PrivatBank",
+                                                                          api_url="https://api.privatbank.ua/p24api/"
+                                                                                  "exchange_rates")
+            form = Calculator(request.POST)
+            if exchange_rates_provider.exists():
+                exchange_rate_provider = exchange_rates_provider.first()
+                exchange_rates = ExchangeRate.objects.filter(base_currency="UAH", currency__in=['USD', 'EUR', 'CHF', 'GBP'],
+                                                             provider=exchange_rate_provider).order_by('for_date').all()
 
-            currency_data_CHF = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
-                                                            currency__in=['CHF']).order_by('for_date')
-            currency_data_json_CHF = json.dumps([{
-                'for_date': rate.for_date.strftime('%Y-%m-%d'),
-                'buy_rate': float(rate.buy_rate),
-                'currency': rate.currency,
-                # Include other fields as needed
-            } for rate in currency_data_CHF])
+                if exchange_rates:
+                    currency_data_US = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
+                                                                   currency__in=['USD'],
+                                                                   provider=exchange_rate_provider).order_by('for_date')
+                    currency_data_json_US = json.dumps([{
+                        'for_date': rate.for_date.strftime('%Y-%m-%d'),
+                        'buy_rate': float(rate.buy_rate),
+                        'currency': rate.currency,
+                        # Include other fields as needed
+                    } for rate in currency_data_US])
 
-            currency_data_GBP = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
-                                                            currency__in=['GBP']).order_by('for_date')
-            currency_data_json_GBP = json.dumps([{
-                'for_date': rate.for_date.strftime('%Y-%m-%d'),
-                'buy_rate': float(rate.buy_rate),
-                'currency': rate.currency,
-                # Include other fields as needed
-            } for rate in currency_data_GBP])
+                    currency_data_EUR = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
+                                                                    currency__in=['EUR'],
+                                                                    provider=exchange_rate_provider).order_by('for_date')
+                    currency_data_json_EUR = json.dumps([{
+                        'for_date': rate.for_date.strftime('%Y-%m-%d'),
+                        'buy_rate': float(rate.buy_rate),
+                        'currency': rate.currency,
+                        # Include other fields as needed
+                    } for rate in currency_data_EUR])
 
-            context = {
-                'currency_data_US': currency_data_json_US,
-                'currency_data_EUR': currency_data_json_EUR,
-                'currency_data_GBP': currency_data_json_GBP,
-                'currency_data_CHF': currency_data_json_CHF,
-                'form': form
-            }
+                    currency_data_CHF = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
+                                                                    currency__in=['CHF'],
+                                                                    provider=exchange_rate_provider).order_by('for_date')
+                    currency_data_json_CHF = json.dumps([{
+                        'for_date': rate.for_date.strftime('%Y-%m-%d'),
+                        'buy_rate': float(rate.buy_rate),
+                        'currency': rate.currency,
+                        # Include other fields as needed
+                    } for rate in currency_data_CHF])
 
-            html_content = render(request, 'core/index.html', context)
-            return HttpResponse(html_content)
+                    currency_data_GBP = ExchangeRate.objects.filter(for_date__gte='2023-01-01', for_date__lte=today(),
+                                                                    currency__in=['GBP'],
+                                                                    provider=exchange_rate_provider).order_by('for_date')
+                    currency_data_json_GBP = json.dumps([{
+                        'for_date': rate.for_date.strftime('%Y-%m-%d'),
+                        'buy_rate': float(rate.buy_rate),
+                        'currency': rate.currency,
+                        # Include other fields as needed
+                    } for rate in currency_data_GBP])
+
+                    context = {
+                        'currency_data_US': currency_data_json_US,
+                        'currency_data_EUR': currency_data_json_EUR,
+                        'currency_data_GBP': currency_data_json_GBP,
+                        'currency_data_CHF': currency_data_json_CHF,
+                        'form': form
+                    }
+
+                    html_content = render(request, 'core/index.html', context)
+
+                    return HttpResponse(html_content)
+

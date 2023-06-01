@@ -2,9 +2,6 @@ asgiref==3.6.0
 certifi==2023.5.7
 charset-normalizer==3.1.0
 click==7.1.2
-click-aliases==1.0.1
-click-default-group==1.2.2
-click-help-colors==0.9.1
 colorama==0.4.6
 commonmark==0.9.1
 contourpy==1.0.7
@@ -28,7 +25,7 @@ py==1.11.0
 pycodestyle==2.10.0
 pycountry==22.3.5
 pycountrycodes==0.3.1
-pydantic==1.10.7
+pydantic
 pyflakes==3.0.1
 Pygments==2.15.1
 pyparsing==3.0.9
@@ -44,6 +41,9 @@ tabulate==0.8.10
 task==0.2.5
 tomli==2.0.1
 tox==3.28.0
-typing-extensions==3.10.0.2
+typing-extensions
 urllib3==2.0.2
 virtualenv==20.23.0
+celery==5.1.2
+click==7.1.2
+redis==4.5.5
